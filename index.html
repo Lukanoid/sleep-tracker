@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sleep Score</title>
+</head>
+<body>
+
+<h2>Sleep Quality Calculator</h2>
+
+<label>Date:</label>
+<input type="date" id="date"><br><br>
+
+<label>Sleep Time:</label>
+<input type="time" id="sleep"><br><br>
+
+<label>Wake Time:</label>
+<input type="time" id="wake"><br><br>
+
+<button onclick="calculate()">Check Sleep</button>
+
+<h3 id="result"></h3>
+
+<script>
+function sleepScore(date, sleepTime, wakeTime) {
+    const sleepDateTime = new Date(`${date}T${sleepTime}:00`);
+    let wakeDateTime = new Date(`${date}T${wakeTime}:00`);
+
+    if (wakeDateTime <= sleepDateTime) {
+        wakeDateTime.setDate(wakeDateTime.getDate() + 1);
+    }
+
+    const durationHours = (wakeDateTime - sleepDateTime) / (1000 * 60 * 60);
+    const sleepHour = sleepDateTime.getHours() + sleepDateTime.getMinutes() / 60;
+
+    let score = 0;
+
+    score += Math.min(durationHours / 8, 1) * 50;
+
+    if (sleepHour >= 22 && sleepHour <= 23.5) score += 20;
+    else if (sleepHour >= 20 && sleepHour < 22) score += 10;
+
+    if (sleepHour >= 20 || sleepHour < 8) score += 20;
+
+    if (sleepHour >= 21 && sleepHour <= 24) score += 10;
+
+    score = Math.round(score);
+
+    let quality = "poor";
+    if (score >= 85) quality = "excellent";
+    else if (score >= 70) quality = "good";
+    else if (score >= 50) quality = "average";
+
+    return {
+        durationHours: durationHours.toFixed(2),
+        score,
+        quality
+    };
+}
+
+function calculate(){
+    const date = document.getElementById("date").value;
+    const sleep = document.getElementById("sleep").value;
+    const wake = document.getElementById("wake").value;
+
+    const result = sleepScore(date, sleep, wake);
+
+    document.getElementById("result").innerText =
+        `Duration: ${result.durationHours}h | Score: ${result.score} | Quality: ${result.quality}`;
+}
+</script>
+
+</body>
+</html>
