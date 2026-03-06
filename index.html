@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Sleep Tracker</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+text-align:center;
+}
+
+table{
+border-collapse:collapse;
+margin:auto;
+width:80%;
+background:white;
+color:black;
+}
+
+th,td{
+border:1px solid #ccc;
+padding:8px;
+text-align:center;
+}
+
+th{
+background:#1e3a5f;
+color:white;
+}
+
+input{
+padding:4px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h2>🌙 Sleep Tracker</h2>
+
+<label>Select Date:</label>
+<input type="date" id="datePicker" onchange="loadDay()">
+
+<br><br>
+
+<table>
+
+<thead>
+<tr>
+<th>Name</th>
+<th>Sleep Time</th>
+<th>Wake Time</th>
+<th>Duration</th>
+<th>Score</th>
+<th>Quality</th>
+</tr>
+</thead>
+
+<tbody id="tableBody"></tbody>
+
+</table>
+
+<script>
+
+const players = [
+"Boboa",
+"Rokera",
+"Peshev",
+"Bizi",
+"Denqka",
+"Martin",
+"Munji",
+"Ivan"
+];
+
+function sleepScore(date,sleep,wake){
+
+const sleepDate = new Date(`${date}T${sleep}:00`);
+let wakeDate = new Date(`${date}T${wake}:00`);
+
+if(wakeDate <= sleepDate){
+wakeDate.setDate(wakeDate.getDate()+1);
+}
+
+const diffMs = wakeDate - sleepDate;
+
+const totalMinutes = Math.round(diffMs / (1000 * 60));
+
+const hours = Math.floor(totalMinutes / 60);
+const minutes = totalMinutes % 60;
+
+const durationHours = totalMinutes / 60;
+
+const sleepHour = sleepDate.getHours()+sleepDate.getMinutes()/60;
+
+let score=0;
+
+score += Math.min(durationHours/8,1)*50;
+
+if(sleepHour>=22 && sleepHour<=23.5) score+=20;
+else if(sleepHour>=20 && sleepHour<22) score+=10;
+
+if(sleepHour>=20 || sleepHour<8) score+=20;
+
+if(sleepHour>=21 && sleepHour<=24) score+=10;
+
+score=Math.round(score);
+
+let quality="Bolnica";
+
+if(score>=85) quality="excellent";
+else if(score>=70) quality="good";
+else if(score>=50) quality="Muka";
+
+return{
+duration: `${hours}h and ${minutes}m`,
+durationHours: durationHours,
+score,
+quality
+};
+
+}
+
+function loadDay(){
+
+const date=document.getElementById("datePicker").value;
+
+const saved = JSON.parse(localStorage.getItem("sleep-"+date)) || {};
+
+const body=document.getElementById("tableBody");
+
+body.innerHTML="";
+
+players.forEach(name=>{
+
+const data = saved[name] || {};
+
+const row = document.createElement("tr");
+
+row.innerHTML=`
+
+<td>${name}</td>
+
+<td>
+<input type="time" value="${data.sleep || ""}" onchange="saveRow('${name}')">
+</td>
+
+<td>
+<input type="time" value="${data.wake || ""}" onchange="saveRow('${name}')">
+</td>
+
+<td id="dur-${name}">${data.duration || ""}</td>
+<td id="score-${name}">${data.score || ""}</td>
+<td id="qual-${name}">${data.quality || ""}</td>
+
+`;
+
+body.appendChild(row);
+
+});
+
+}
+
+function saveRow(name){
+
+const date=document.getElementById("datePicker").value;
+
+const rows=document.querySelectorAll("#tableBody tr");
+
+rows.forEach(row=>{
+
+if(row.cells[0].innerText===name){
+
+const sleep=row.cells[1].querySelector("input").value;
+const wake=row.cells[2].querySelector("input").value;
+
+if(!sleep || !wake) return;
+
+const result=sleepScore(date,sleep,wake);
+
+row.cells[3].innerText=result.duration;
+row.cells[4].innerText=result.score;
+row.cells[5].innerText=result.quality;
+
+const saved = JSON.parse(localStorage.getItem("sleep-"+date)) || {};
+
+saved[name]={
+sleep,
+wake,
+duration:result.duration,
+score:result.score,
+quality:result.quality
+};
+
+localStorage.setItem("sleep-"+date,JSON.stringify(saved));
+
+}
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
